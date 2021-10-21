@@ -1,34 +1,42 @@
-import java.net.*;
 import java.io.*;
-
-public class Server {
-    private ServerSocket serverSocket;
-    private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
-
-    public void start(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
-        clientSocket = serverSocket.accept();
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        String greeting = in.readLine();
-            if ("hello server".equals(greeting)) {
-                out.println("hello client");
+import java.net.*;
+  
+// Server class
+public class Server 
+{
+    public static void main(String[] args) throws IOException 
+    {
+        // server is listening on port 5056
+        ServerSocket serverSocket = new ServerSocket(5056);
+          
+        // running infinite loop for getting
+        // client request
+        while (true){
+            Socket socket = null;
+              
+            try{
+                // socket object to receive incoming client requests
+                socket = serverSocket.accept();
+                  
+                System.out.println("A new client is connected : " + socket);
+                  
+                // obtaining input and out streams
+                DataInputStream dis = new DataInputStream(socket.getInputStream());
+                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+                  
+                System.out.println("Assigning new thread for this client");
+  
+                // create a new thread object
+                Thread t = new ClientHandler(socket, dis, dos);
+  
+                // Invoking the start() method
+                t.start();
+                  
             }
-            else {
-                out.println("unrecognised greeting");
+            catch (Exception error){
+                socket.close();
+                error.printStackTrace();
             }
-    }
-
-    public void stop() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
-        serverSocket.close();
-    }
-    public static void main(String[] args) throws IOException {
-        Server server = new Server();
-        server.start(6666);
+        }
     }
 }

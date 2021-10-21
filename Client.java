@@ -1,26 +1,51 @@
-import java.net.*;
 import java.io.*;
-
+import java.net.*;
+import java.util.Scanner;
+  
+// Client class
 public class Client {
-    private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
-
-    public void startConnection(String ip, int port) throws IOException {
-        clientSocket = new Socket(ip, port);
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-    }
-
-    public String sendMessage(String msg) throws IOException {
-        out.println(msg);
-        String resp = in.readLine();
-        return resp;
-    }
-
-    public void stopConnection() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
+    public static void main(String[] args) throws IOException{
+        try{
+            Scanner scn = new Scanner(System.in);
+              
+            // getting localhost ip
+            InetAddress ip = InetAddress.getByName("localhost");
+      
+            // establish the connection with server port 5056
+            Socket s = new Socket(ip, 5056);
+      
+            // obtaining input and out streams
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+      
+            // the following loop performs the exchange of
+            // information between client and client handler
+            while (true){
+                System.out.println(dis.readUTF());
+                String tosend = scn.nextLine();
+                dos.writeUTF(tosend);
+                  
+                // If client sends exit,close this connection 
+                // and then break from the while loop
+                if(tosend.equals("Exit"))
+                {
+                    System.out.println("Closing this connection : " + s);
+                    s.close();
+                    System.out.println("Connection closed");
+                    break;
+                }
+                  
+                // printing date or time as requested by client
+                String received = dis.readUTF();
+                System.out.println(received);
+            }
+              
+            // closing resources
+            scn.close();
+            dis.close();
+            dos.close();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 }
