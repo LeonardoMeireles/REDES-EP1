@@ -2,41 +2,48 @@ import java.io.*;
 import java.net.*;
   
 // Server class
-public class Server 
-{
-    public static void main(String[] args) throws IOException 
-    {
-        // server is listening on port 5056
-        ServerSocket serverSocket = new ServerSocket(5056);
-          
-        // running infinite loop for getting
-        // client request
-        while (true){
-            Socket socket = null;
-              
-            try{
-                // socket object to receive incoming client requests
-                socket = serverSocket.accept();
-                  
-                System.out.println("A new client is connected : " + socket);
-                  
-                // obtaining input and out streams
-                DataInputStream dis = new DataInputStream(socket.getInputStream());
-                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-                  
-                System.out.println("Assigning new thread for this client");
-  
-                // create a new thread object
-                Thread t = new ClientHandler(socket, dis, dos);
-  
-                // Invoking the start() method
-                t.start();
-                  
-            }
-            catch (Exception error){
-                socket.close();
-                error.printStackTrace();
-            }
+public class Server {
+
+    private final int port;
+    private ServerSocket serverSocket;
+    private Socket clientSocket;
+    private DataInputStream input;
+    private DataOutputStream output;
+
+    Server(int port) throws IOException {
+        this.port = port;
+        this.serverSocket = new ServerSocket(port);
+    }
+
+    private Socket waitConnection() throws IOException {
+        clientSocket = serverSocket.accept();
+        return clientSocket;
+    }
+
+    private void treatConnection(Socket clientSocket) throws IOException {
+        try{
+            // Obtaining input and out streams
+            input = new DataInputStream(clientSocket.getInputStream());
+            output = new DataOutputStream(clientSocket.getOutputStream());
+            
+            // Create a new thread object
+            Thread thread = new ClientHandler(clientSocket, input, output);
+            System.out.println("Assigning new thread for this client");
+
+            // Invoking the start() method
+            thread.start();
+        } catch (Exception error){
+            clientSocket.close();
+            error.printStackTrace();
+        }
+    }
+    
+    public void run() throws IOException {
+        /* Running infinite loop for getting client request */
+        while (true) {
+            waitConnection();
+            System.out.println("A new client is connected : " + clientSocket); 
+            treatConnection(clientSocket);
         }
     }
 }

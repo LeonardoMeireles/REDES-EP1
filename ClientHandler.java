@@ -3,82 +3,109 @@ import java.text.*;
 import java.util.*;
 import java.net.*;
 
-class ClientHandler extends Thread 
-{
-    DateFormat fordate = new SimpleDateFormat("yyyy/MM/dd");
-    DateFormat fortime = new SimpleDateFormat("hh:mm:ss");
-    final DataInputStream dis;
-    final DataOutputStream dos;
-    final Socket s;
+class ClientHandler extends Thread {
+    final DataInputStream dataInputStream;
+    final DataOutputStream dataOutputStream;
+    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+    DateFormat timeFormat = new SimpleDateFormat("hh:mm:ss");
+    final Socket socket;
       
-  
-    // Constructor
-    public ClientHandler(Socket s, DataInputStream dis, DataOutputStream dos) 
-    {
-        this.s = s;
-        this.dis = dis;
-        this.dos = dos;
+    public ClientHandler(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+        this.socket = socket;
+        this.dataInputStream = dataInputStream;
+        this.dataOutputStream = dataOutputStream;
+    }
+    
+    public void writeLogo() throws FileNotFoundException, IOException{
+        File logo = new File("./dragon.txt");
+        Scanner reader = new Scanner(logo);
+        while(reader.hasNextLine()){
+            dataOutputStream.writeUTF(reader.nextLine());
+        }
+        reader.close();
+    }
+
+    public void addToAuction(){
+        Date date = new Date();
+        String name = "";
+        String price = "";
+        String rightNowDate =  dateFormat.format(date);
+        String rightNowTime = timeFormat.format(date);
+
+        try{
+            dataOutputStream.writeUTF("Name: ");
+            name = dataInputStream.readUTF();
+            if(name.equals("Cancel")){
+                return;
+            }
+
+            dataOutputStream.writeUTF("Price: ");
+            price = dataInputStream.readUTF();
+            if(price.equals("Cancel")){
+                return;
+            } 
+        } catch (IOException error) {
+            error.printStackTrace();
+        }
+        System.out.println(name + price);
     }
   
     @Override
-    public void run() 
-    {
+    public void run(){
         String received;
-        String toreturn;
-        while (true) 
-        {
-            try {
-  
+        while (true){
+            try{
                 // Ask user what he wants
-                dos.writeUTF("What do you want?[Date | Time]..\n"+
-                            "Type Exit to terminate connection.");
-                  
+                writeLogo();
+                dataOutputStream.writeUTF("Welcome traveler, what brings you to this place of wonders? Buying? Selling? Suit yourself! There's place for everyone!\n");
                 // receive the answer from client
-                received = dis.readUTF();
-                  
-                if(received.equals("Exit"))
-                { 
-                    System.out.println("Client " + this.s + " sends exit...");
+                received = dataInputStream.readUTF();
+                
+                if(received.equals("Exit")){ 
+                    System.out.println("Client " + this.socket + " sends exit..."); 
                     System.out.println("Closing this connection.");
-                    this.s.close();
+                    this.socket.close();
                     System.out.println("Connection closed");
                     break;
                 }
-                  
-                // creating Date object
-                Date date = new Date();
-                  
+                
                 // write on output stream based on the
                 // answer from the client
-                switch (received) {
-                  
-                    case "Date" :
-                        toreturn = fordate.format(date);
-                        dos.writeUTF(toreturn);
+                switch (received){
+                    case "List my shop" :
+                        break;
+
+                    case "Auction" :
+                        dataOutputStream.writeUTF("Please enter the item's name and price!\n");
+                        addToAuction();
                         break;
                           
+                    case "Remove Item" :
+                        dataOutputStream.writeUTF("Time");
+                        break;
+
                     case "Time" :
-                        toreturn = fortime.format(date);
-                        dos.writeUTF(toreturn);
                         break;
-                          
+
+                    case "List proposals" :
+                    
+                    case "Item X detail" :
+                    
                     default:
-                        dos.writeUTF("Invalid input");
+                        dataOutputStream.writeUTF("Invalid input");
                         break;
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException error) {
+                error.printStackTrace();
             }
         }
-          
-        try
-        {
+
+        try{
             // closing resources
-            this.dis.close();
-            this.dos.close();
-              
-        }catch(IOException e){
-            e.printStackTrace();
+            this.dataInputStream.close();
+            this.dataOutputStream.close();
+        } catch(IOException error){
+            error.printStackTrace();
         }
     }
 }
