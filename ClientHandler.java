@@ -19,9 +19,12 @@ class ClientHandler extends Thread {
     public void writeLogo() throws FileNotFoundException, IOException{
         File logo = new File("./dragon.txt");
         Scanner reader = new Scanner(logo);
+        StringBuilder fullLogo = new StringBuilder("\n");
         while(reader.hasNextLine()){
-            dataOutputStream.writeUTF(reader.nextLine());
+            fullLogo.append(reader.nextLine()).append("\n");
         }
+        fullLogo.append("\n\n\n\nPlease login!\n");
+        dataOutputStream.writeUTF(fullLogo.toString());
         reader.close();
     }
 
@@ -57,7 +60,9 @@ class ClientHandler extends Thread {
             try{
                 // Ask user what he wants
                 writeLogo();
-                dataOutputStream.writeUTF("Welcome traveler, what brings you to this place of wonders? Buying? Selling? Suit yourself! There's place for everyone!\n");
+                // ===================== TO DO =====================
+                // userLogin();
+                // dataOutputStream.writeUTF("Welcome traveler, what brings you to this place of wonders? Buying? Selling? Suit yourself! There's a place for everyone!\n");
                 // receive the answer from client
                 received = dataInputStream.readUTF();
                 
@@ -88,9 +93,11 @@ class ClientHandler extends Thread {
                         break;
 
                     case "List proposals" :
+                        break;
                     
                     case "Item X detail" :
-                    
+                        break;
+
                     default:
                         dataOutputStream.writeUTF("Invalid input");
                         break;
