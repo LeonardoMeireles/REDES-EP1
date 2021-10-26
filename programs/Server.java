@@ -1,3 +1,5 @@
+package programs;
+
 import java.io.*;
 import java.net.*;
   
@@ -22,7 +24,7 @@ public class Server {
 
     private void treatConnection(Socket clientSocket) throws IOException {
         try{
-            // Obtaining input and out streams
+            // Obtaining input and output streams
             input = new DataInputStream(clientSocket.getInputStream());
             output = new DataOutputStream(clientSocket.getOutputStream());
             

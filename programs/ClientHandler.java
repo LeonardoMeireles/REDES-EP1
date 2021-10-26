@@ -1,3 +1,5 @@
+package programs;
+
 import java.io.*;
 import java.text.*;
 import java.util.*;
@@ -9,25 +11,47 @@ class ClientHandler extends Thread {
     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
     DateFormat timeFormat = new SimpleDateFormat("hh:mm:ss");
     final Socket socket;
-      
+
     public ClientHandler(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
         this.socket = socket;
         this.dataInputStream = dataInputStream;
         this.dataOutputStream = dataOutputStream;
     }
-    
+
     public void writeLogo() throws FileNotFoundException, IOException{
-        File logo = new File("./dragon.txt");
+        File logo = new File("resources/dragon.txt");
         Scanner reader = new Scanner(logo);
         StringBuilder fullLogo = new StringBuilder("\n");
         while(reader.hasNextLine()){
             fullLogo.append(reader.nextLine()).append("\n");
         }
-        fullLogo.append("\n\n\n\nPlease login!\n");
+        fullLogo.append("\nWelcome traveler, what brings you to this place of wonders? Buying? Selling? Suit yourself! There's a place for everyone!\n");
+        fullLogo.append("\n\n\nPlease enter your username:\n");
         dataOutputStream.writeUTF(fullLogo.toString());
         reader.close();
     }
+    /*
+    public void login(String username) throws FileNotFoundException, IOException{
+        File dataBase = new File("resources/database");
+        File [] list = dataBase.listFiles();
 
+        //search for username && create new account if username is not found
+        for(File dir : list){
+            String dirName = dir.getParent();
+            if(username.equals(dirName)){
+                dataOutputStream.writeUTF("Insert your password:");
+                String password = dataInputStream.readUTF();
+            }
+            else {
+                //create new user directory
+                new File("resourcces/database"+username).mkdirs();
+                dataOutputStream.writeUTF("Looks like you are new around here, please create your password:");
+                String newPassword = dataInputStream.readUTF();
+            }
+        }
+        
+    }
+    */
     public void addToAuction(){
         Date date = new Date();
         String name = "";
@@ -52,19 +76,17 @@ class ClientHandler extends Thread {
         }
         System.out.println(name + price);
     }
-  
+
     @Override
     public void run(){
         String received;
         while (true){
             try{
-                // Ask user what he wants
+                
                 writeLogo();
-                // ===================== TO DO =====================
-                // userLogin();
-                // dataOutputStream.writeUTF("Welcome traveler, what brings you to this place of wonders? Buying? Selling? Suit yourself! There's a place for everyone!\n");
-                // receive the answer from client
+                
                 received = dataInputStream.readUTF();
+                //login(received);
                 
                 if(received.equals("Exit")){ 
                     System.out.println("Client " + this.socket + " sends exit..."); 

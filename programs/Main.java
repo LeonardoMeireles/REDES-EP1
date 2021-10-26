@@ -1,3 +1,5 @@
+package programs;
+
 import java.io.IOException;
 
 class Main{
