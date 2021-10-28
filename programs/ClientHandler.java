@@ -18,40 +18,57 @@ class ClientHandler extends Thread {
         this.dataOutputStream = dataOutputStream;
     }
 
-    public void writeLogo() throws FileNotFoundException, IOException{
-        File logo = new File("resources/dragon.txt");
-        Scanner reader = new Scanner(logo);
-        StringBuilder fullLogo = new StringBuilder("\n");
-        while(reader.hasNextLine()){
-            fullLogo.append(reader.nextLine()).append("\n");
-        }
+    public void startAuctionHouse() throws FileNotFoundException, IOException{
+        StringBuilder fullLogo = escreveASC("resources/dragon.txt");
         fullLogo.append("\nWelcome traveler, what brings you to this place of wonders? Buying? Selling? Suit yourself! There's a place for everyone!\n");
-        fullLogo.append("\n\n\nPlease enter your username:\n");
+        fullLogo.append("\n\nInsert your username:");
         dataOutputStream.writeUTF(fullLogo.toString());
-        reader.close();
+        dataOutputStream.flush();
+        String username = dataInputStream.readUTF();
+        login(username);
     }
-    /*
+
+    //Not finished
+    public void createAccount() throws FileNotFoundException, IOException{
+        StringBuilder createAccountString = escreveASC("resources/create_account.txt");
+        createAccountString.append("Insert your username:\n");
+        String newUsername = dataInputStream.readUTF();
+        createAccountString.append("Insert your password:\n");
+        new File("resourcces/database"+newUsername).mkdirs();
+    }
+
     public void login(String username) throws FileNotFoundException, IOException{
-        File dataBase = new File("resources/database");
+        File dataBase = new File("database");
         File [] list = dataBase.listFiles();
 
         //search for username && create new account if username is not found
+        boolean userFound = false;
         for(File dir : list){
-            String dirName = dir.getParent();
-            if(username.equals(dirName)){
-                dataOutputStream.writeUTF("Insert your password:");
-                String password = dataInputStream.readUTF();
+            String usernameFile = dir.getName();
+            if( (username+".txt").equals(usernameFile)){
+                userFound = true;
             }
-            else {
-                //create new user directory
-                new File("resourcces/database"+username).mkdirs();
-                dataOutputStream.writeUTF("Looks like you are new around here, please create your password:");
-                String newPassword = dataInputStream.readUTF();
+        }
+        if(userFound){
+            dataOutputStream.writeUTF("Insert your password:");
+            dataOutputStream.flush();
+            String password = dataInputStream.readUTF();
+        } else { //no user found
+            dataOutputStream.writeUTF("\nHuum, i don't know any adventurer with that name, would you like to sign up for my services?\nY: yes\tN: no\n");
+            dataOutputStream.flush();
+            String answer = dataInputStream.readUTF();
+            if(answer.toLowerCase().equals("y")){
+                createAccount();
+            } else{
+                dataOutputStream.writeUTF("Insert your username:\n");
+                dataOutputStream.flush();
+                String newUsername = dataInputStream.readUTF();
+                login(newUsername);
             }
         }
         
     }
-    */
+
     public void addToAuction(){
         Date date = new Date();
         String name = "";
@@ -61,12 +78,14 @@ class ClientHandler extends Thread {
 
         try{
             dataOutputStream.writeUTF("Name: ");
+            dataOutputStream.flush();
             name = dataInputStream.readUTF();
             if(name.equals("Cancel")){
                 return;
             }
 
             dataOutputStream.writeUTF("Price: ");
+            dataOutputStream.flush();
             price = dataInputStream.readUTF();
             if(price.equals("Cancel")){
                 return;
@@ -77,13 +96,24 @@ class ClientHandler extends Thread {
         System.out.println(name + price);
     }
 
+    public StringBuilder escreveASC(String path) throws IOException{
+        File file = new File(path);
+        Scanner reader = new Scanner(file);
+        StringBuilder fileStringBuilder = new StringBuilder();
+        while(reader.hasNextLine()){
+            fileStringBuilder.append(reader.nextLine()).append("\n");
+        }
+        reader.close();
+        return fileStringBuilder;
+    }
+
     @Override
     public void run(){
         String received;
         while (true){
             try{
                 
-                writeLogo();
+                startAuctionHouse();
                 
                 received = dataInputStream.readUTF();
                 //login(received);
@@ -104,14 +134,13 @@ class ClientHandler extends Thread {
 
                     case "Auction" :
                         dataOutputStream.writeUTF("Please enter the item's name and price!\n");
+                        dataOutputStream.flush();
                         addToAuction();
                         break;
                           
                     case "Remove Item" :
                         dataOutputStream.writeUTF("Time");
-                        break;
-
-                    case "Time" :
+                        dataOutputStream.flush();
                         break;
 
                     case "List proposals" :
@@ -122,6 +151,7 @@ class ClientHandler extends Thread {
 
                     default:
                         dataOutputStream.writeUTF("Invalid input");
+                        dataOutputStream.flush();
                         break;
                 }
             } catch (IOException error) {
