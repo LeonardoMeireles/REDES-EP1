@@ -22,12 +22,16 @@ public class Client {
       
             // the following loop performs the exchange of
             // information between client and client handler
+            String tosend;
+
             while (true){
                 System.out.println(dataInputStream.readUTF());
-                String tosend = scanner.nextLine();
+                tosend = scanner.nextLine();
+
                 dataOutputStream.writeUTF(tosend);
-                  
-                // If client sends exit,close this connection 
+                dataOutputStream.flush();
+
+                // If client sends exit,close this connection
                 // and then break from the while loop
                 if(tosend.equals("Exit")){
                     System.out.println("Closing this connection : " + socket);
@@ -35,13 +39,13 @@ public class Client {
                     System.out.println("Connection closed");
                     break;
                 }
-                  
+
                 // printing date or time as requested by client
-                String received = dataInputStream.readUTF();
-                System.out.println(received);
+                //String received = dataInputStream.readUTF();
+                //System.out.println(received);
             }
-              
-            // closing resources
+
+            //closing resources
             scanner.close();
             dataInputStream.close();
             dataOutputStream.close();

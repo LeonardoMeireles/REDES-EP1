@@ -14,7 +14,7 @@ public class Server {
 
     Server(int port) throws IOException {
         this.port = port;
-        this.serverSocket = new ServerSocket(port);
+        this.serverSocket = new ServerSocket(this.port);
     }
 
     private Socket waitConnection() throws IOException {
@@ -22,7 +22,7 @@ public class Server {
         return clientSocket;
     }
 
-    private void treatConnection(Socket clientSocket) throws IOException {
+    private void treatConnection(Socket clientSocket) throws IOException, SocketException {
         try{
             // Obtaining input and output streams
             input = new DataInputStream(clientSocket.getInputStream());
@@ -36,7 +36,8 @@ public class Server {
             thread.start();
         } catch (Exception error){
             clientSocket.close();
-            error.printStackTrace();
+            System.out.println(clientSocket + "connection reset by client");
+            //error.printStackTrace();
         }
     }
     
