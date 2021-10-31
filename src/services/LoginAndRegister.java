@@ -22,14 +22,13 @@ public class LoginAndRegister{
         this.connection = connection;
     }
 
-
     public String login(String username) throws SQLException, IOException{
-        //search for username && create new account if username is not found
+        //search for username and create new account if username is not found
         statement = connection.createStatement();
         String findUserQuery = String.format("SELECT * FROM Users WHERE username == '%s';", username);
         ResultSet userFound = statement.executeQuery(findUserQuery);
         // If user was found, login user
-        if(userFound.next() == true){
+        if(userFound.next()){
             while(true){
                 clientHandler.dataOutputStream.writeUTF("Insert your password:");
                 clientHandler.dataOutputStream.flush();
@@ -41,7 +40,6 @@ public class LoginAndRegister{
                     clientHandler.dataOutputStream.writeUTF("That was the wrong password, would you like to try again?\nY: yes\tN: no");
                     String answer = clientHandler.dataInputStream.readUTF();
                     if(answer.toLowerCase().equals("y")){
-                        statement.close();
                         continue;
                     } else{
                         statement.close();
@@ -53,12 +51,11 @@ public class LoginAndRegister{
             clientHandler.dataOutputStream.writeUTF("\nHuum, i don't know any adventurer with that name, would you like to sign up for my services?\nY: yes\tN: no");
             clientHandler.dataOutputStream.flush();
             while(true){
+                statement.close();
                 String answer = clientHandler.dataInputStream.readUTF();
                 if(answer.toLowerCase().equals("y")){
-                    statement.close();
                     return createAccount();
                 } else {
-                    statement.close();
                     return null;
                 }
             }
@@ -81,11 +78,10 @@ public class LoginAndRegister{
         } else {
             clientHandler.dataOutputStream.writeUTF("\nInsert your password (under 50 characters):");
             String newPassword = clientHandler.dataInputStream.readUTF();
-            String newUserQuery = String.format("INSERT INTO Users (username,password) VALUES('%s','%s', 1000)", newUsername, newPassword);
+            String newUserQuery = String.format("INSERT INTO Users (username,password,wallet) VALUES('%s','%s', 1000)", newUsername, newPassword);
             statement.executeUpdate(newUserQuery);
             statement.close();
             return newUsername;
         }
     }
-
 }

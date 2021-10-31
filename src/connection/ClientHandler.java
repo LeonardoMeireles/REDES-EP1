@@ -52,9 +52,14 @@ public class ClientHandler extends Thread {
         // If user exits login service
         if(username == null){
             startAuctionHouse();
+            return;
         }
         // Login/Register successful
+        Server.loggedInClients.add(this);
+        Server.loggedInClientsNum++;
         this.username = username;
+        dataOutputStream.writeUTF("\n\nWelcome " +username +" it's a pleasure to have you!\nRemember all commands can be stopped at any given time by tipping 'cancel'.\n");
+        dataOutputStream.flush();
     }
 
     //handle txt reading to display
@@ -81,7 +86,7 @@ public class ClientHandler extends Thread {
         Market market = new Market(this);
         while (true){
             try{
-                dataOutputStream.writeUTF("Welcome to the Auction House my dear customer!\nPlease insert a command (enter 'commands' to see the full list of commands):");
+                dataOutputStream.writeUTF("\nPlease insert a command (enter 'commands' to see the full list of commands):");
 
                 received = dataInputStream.readUTF();
                 if(received.toLowerCase().equals("exit")){
@@ -105,9 +110,8 @@ public class ClientHandler extends Thread {
                         market.addItem();
                         break;
 
-                    case "remove Item" :
-                        dataOutputStream.writeUTF("Time");
-                        dataOutputStream.flush();
+                    case "get item" :
+                        market.getItem();
                         break;
 
                     case "list proposals" :
