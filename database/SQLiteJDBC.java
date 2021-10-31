@@ -3,27 +3,25 @@ package database;
 import java.sql.*;
 
 public class SQLiteJDBC {
-    private Connection connection = null;
 
     // Connect/Create a database
-    public boolean connect(){
+    public Connection connect(){
+        Connection newConnection;
         try{
             String url = "jdbc:sqlite:database/AuctionHouse.db";
-            this.connection = DriverManager.getConnection(url);
+            newConnection = DriverManager.getConnection(url);
         } catch(SQLException error){
             System.err.println(error.getMessage());
-            return false;
+            return null;
         }
-        return true;
+        return(newConnection);
     }
 
-    public boolean disconnect(){
+    public boolean disconnect(Connection connection){
         try{
-            if(this.connection.isClosed() == false){
-                this.connection.close();
+            if(connection.isClosed() == false){
+                connection.close();
             }
-            String url = "jdbc:sqlite:database/users.db";
-            this.connection = DriverManager.getConnection(url);
         } catch(SQLException error){
             System.err.println(error.getMessage());
             return false;

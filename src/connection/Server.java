@@ -1,12 +1,26 @@
+package connection;
+
+import database.SQLiteJDBC;
+
 import java.io.*;
 import java.util.*;
 import java.net.*;
 
-// Server class
+// connection.Server class
 public class Server {
 
     static Vector<ClientHandler> activeClients = new Vector<>();
     static int activeClientsNum = 0;
+    static SQLiteJDBC database = new SQLiteJDBC();
+
+    public static void startThread(ClientHandler clientHandler){
+        Thread thread = new Thread(clientHandler);
+
+        System.out.println("Adding this client to active client list");
+
+        // start the thread.
+        thread.start();
+    }
 
     public static void main(String[] args) throws IOException {
         // server is listening on port 1234
@@ -14,13 +28,11 @@ public class Server {
 
         Socket socket;
 
-        // running infinite loop for getting
-        // client request
-
+        // loop receives client request
+        
         while (true) {
             // wait for client connection
             socket = serverSocket.accept();
-
             System.out.println("New client request received : " + socket);
 
             // obtain input and output streams
@@ -30,24 +42,10 @@ public class Server {
             System.out.println("Creating a new handler for this client...");
 
             // Create a new handler object for handling this request.
-            ClientHandler clientHandler = new ClientHandler(socket, dataInputStream, dataOutputStream);
+            ClientHandler clientHandler = new ClientHandler(socket, dataInputStream, dataOutputStream, database);
 
             // Create a new Thread with this object.
-            Thread thread = new Thread(clientHandler);
-
-            System.out.println("Adding this client to active client list");
-
-            // start the thread.
-            thread.start();
-
-            // increment i for new client.
-            // i is used for naming only, and can be replaced
-            // by any naming scheme
-            activeClientsNum++;
-
-            // add this client to active clients list
-            activeClients.add(clientHandler);
-
+            startThread(clientHandler);
         }
     }
 }

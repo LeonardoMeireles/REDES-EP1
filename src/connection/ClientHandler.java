@@ -1,8 +1,13 @@
+package connection;
+
 import database.SQLiteJDBC;
-import programs.services.LoginAndRegister;
+import services.LoginAndRegister;
+import services.Market;
 
 import java.io.*;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,59 +20,45 @@ public class ClientHandler extends Thread {
     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
     DateFormat timeFormat = new SimpleDateFormat("hh:mm:ss");
     final Socket socket;
-    static SQLiteJDBC database = new SQLiteJDBC();
+    public static Connection dbConnection;
+    public String username;
 
-    public ClientHandler(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+    public ClientHandler(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream, SQLiteJDBC database) {
         this.socket = socket;
         this.dataInputStream = dataInputStream;
         this.dataOutputStream = dataOutputStream;
+        this.dbConnection = database.connect();
     }
 
     public void endConnection() throws IOException {
-        System.out.println("Client " + this.socket + " sends exit...");
+        System.out.println("connection.Client " + this.socket + " sends exit...");
         System.out.println("Closing this connection.");
         this.socket.close();
         System.out.println("Connection closed");
     }
 
-    public void startAuctionHouse() throws FileNotFoundException, IOException{
-        StringBuilder fullLogo = escreveASC("resources/dragon.txt");
+    // Starts the intro for the app
+    public void startAuctionHouse() throws SQLException, IOException{
+        // Writes down the intro for the app
+        StringBuilder fullLogo = writeASC("resources/dragon.txt");
         fullLogo.append("\nWelcome traveler, what brings you to this place of wonders? Buying? Selling? Suit yourself! There's a place for everyone!\n");
-        fullLogo.append("\n\nInsert your username:");
+        fullLogo.append("\nInsert your username:");
         dataOutputStream.writeUTF(fullLogo.toString());
         dataOutputStream.flush();
         String username = dataInputStream.readUTF();
-        LoginAndRegister loginService = new LoginAndRegister(this);
-        loginService.login(username);
-    }
-
-    public void addToAuction(){
-        Date date = new Date();
-        String name = "";
-        String price = "";
-        String rightNowDate =  dateFormat.format(date);
-        String rightNowTime = timeFormat.format(date);
-
-        try{
-            dataOutputStream.writeUTF("Name: ");
-            dataOutputStream.flush();
-            name = dataInputStream.readUTF();
-            if(name.equals("Cancel")){
-                return;
-            }
-
-            dataOutputStream.writeUTF("Price: ");
-            dataOutputStream.flush();
-            price = dataInputStream.readUTF();
-            if(price.equals("Cancel")){
-                return;
-            } 
-        } catch (IOException error) {
-            error.printStackTrace();
+        // Start the login/register
+        LoginAndRegister loginService = new LoginAndRegister(this, dbConnection);
+        username = loginService.login(username);
+        // If user exits login service
+        if(username == null){
+            startAuctionHouse();
         }
+        // Login/Register successful
+        this.username = username;
     }
 
-    public StringBuilder escreveASC(String path) throws IOException{
+    //handle txt reading to display
+    public StringBuilder writeASC(String path) throws IOException{
         File file = new File(path);
         Scanner reader = new Scanner(file);
         StringBuilder fileStringBuilder = new StringBuilder();
@@ -80,46 +71,49 @@ public class ClientHandler extends Thread {
 
     @Override
     public void run(){
-        database.connect();
         String received;
+        // client login handler
         try{
             startAuctionHouse();
-        } catch(IOException error) {
+        } catch(IOException | SQLException error) {
             error.printStackTrace();
         }
+        Market market = new Market(this);
         while (true){
             try{
+                dataOutputStream.writeUTF("Welcome to the Auction House my dear customer!\nPlease insert a command (enter 'commands' to see the full list of commands):");
 
-                dataOutputStream.writeUTF("Please insert a command.");
                 received = dataInputStream.readUTF();
-                //login(received);
-                
-                if(received.equals("Exit")){
+                if(received.toLowerCase().equals("exit")){
                     endConnection();
                     break;
                 }
                 
                 // write on output stream based on the
                 // answer from the client
-                switch (received){
-                    case "List my shop" :
+                switch (received.toLowerCase()){
+                    case "commands" :
+                        StringBuilder listCommands = writeASC("resources/commands.txt");
+                        dataOutputStream.writeUTF(listCommands.toString());
                         break;
 
-                    case "Auction" :
-                        dataOutputStream.writeUTF("Please enter the item's name and price!\n");
-                        dataOutputStream.flush();
-                        addToAuction();
+                    case "list my shop" :
+                        market.listShop();
                         break;
-                          
-                    case "Remove Item" :
+
+                    case "add item" :
+                        market.addItem();
+                        break;
+
+                    case "remove Item" :
                         dataOutputStream.writeUTF("Time");
                         dataOutputStream.flush();
                         break;
 
-                    case "List proposals" :
+                    case "list proposals" :
                         break;
 
-                    case "Item X detail" :
+                    case "item X detail" :
                         break;
 
                     default:
@@ -134,10 +128,10 @@ public class ClientHandler extends Thread {
 
         try{
             // closing resources
-            database.disconnect();
+            dbConnection.close();
             this.dataInputStream.close();
             this.dataOutputStream.close();
-        } catch(IOException error){
+        } catch(IOException | SQLException error){
             error.printStackTrace();
         }
     }
