@@ -11,7 +11,7 @@
 
 - "sell item": sell an item you received a proposal
 
-- "remove item": remove an item in auction
+- "get item": remove an item in auction
 
 - "list proposals": list proposals you received for items in auction, so you can accept/recuse/renegotiate them
 
