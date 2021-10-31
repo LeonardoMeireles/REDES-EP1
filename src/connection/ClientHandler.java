@@ -31,10 +31,11 @@ public class ClientHandler extends Thread {
     }
 
     public void endConnection() throws IOException {
-        System.out.println("connection.Client " + this.socket + " sends exit...");
-        System.out.println("Closing this connection.");
+        System.out.println("User " +this.username +" is disconnecting");
+        Server.loggedInClients.remove(this);
+        Server.loggedInClientsNum--;
         this.socket.close();
-        System.out.println("Connection closed");
+        System.out.println("User " +this.username +" disconnected");
     }
 
     // Starts the intro for the app
@@ -55,9 +56,9 @@ public class ClientHandler extends Thread {
             return;
         }
         // Login/Register successful
-        Server.loggedInClients.add(this);
-        Server.loggedInClientsNum++;
         this.username = username;
+        Server.loggedInClients.put(this, username);
+        Server.loggedInClientsNum++;
         dataOutputStream.writeUTF("\n\nWelcome " +username +" it's a pleasure to have you!\n");
         dataOutputStream.flush();
     }
@@ -118,6 +119,10 @@ public class ClientHandler extends Thread {
                         market.listItems();
                         break;
 
+                    case "list shop":
+                        market.listShop();
+                        break;
+
                     case "list proposals" :
                         break;
 
@@ -130,7 +135,7 @@ public class ClientHandler extends Thread {
                         break;
                 }
             } catch (IOException error) {
-                error.printStackTrace();
+                break;
             }
         }
 
@@ -139,6 +144,7 @@ public class ClientHandler extends Thread {
             dbConnection.close();
             this.dataInputStream.close();
             this.dataOutputStream.close();
+            endConnection();
         } catch(IOException | SQLException error){
             error.printStackTrace();
         }

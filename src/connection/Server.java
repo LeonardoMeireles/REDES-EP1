@@ -9,7 +9,7 @@ import java.net.*;
 // connection.Server class
 public class Server {
 
-    static Vector<ClientHandler> loggedInClients = new Vector<>();
+    static HashMap<ClientHandler, String> loggedInClients = new HashMap<ClientHandler, String>();
     static int loggedInClientsNum = 0;
     static SQLiteJDBC database = new SQLiteJDBC();
 

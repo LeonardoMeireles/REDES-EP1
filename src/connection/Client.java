@@ -9,7 +9,6 @@ public class Client {
     static Socket socket;
 
     public static void connect() throws IOException{
-
         InetAddress ip = InetAddress.getByName("localhost");// get localhost ip
         socket = new Socket(ip, ServerPort);
     }
@@ -20,15 +19,19 @@ public class Client {
             @Override
             public void run() {
                 while (true) {
-                    // read the message to deliver.
                     String input = scan.nextLine();
-
                     try {
-                        // write on the output stream
                         dataOutputStream.writeUTF(input);
                     } catch (IOException error) {
                         error.printStackTrace();
+                        System.exit(500);
+                        break;
                     }
+                }
+                try {
+                    dataOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -46,7 +49,14 @@ public class Client {
                         System.out.println(input);
                     } catch (IOException error) {
                         error.printStackTrace();
+                        System.exit(500);
+                        break;
                     }
+                }
+                try {
+                    dataInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });

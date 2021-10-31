@@ -143,35 +143,63 @@ public class Market {
             statement= connection.createStatement();
             String listItems = String.format("SELECT * FROM Items WHERE owner == '%s';",client.username);
             ResultSet items = statement.executeQuery(listItems);
-            boolean haveItem = false;
 
             StringBuilder text = new StringBuilder();
             text.append("YOUR SHOP: \n\n\n");
-            while(items.next()) {
-                haveItem = true;
+            if (items.isBeforeFirst() ) {
+                while(items.next()) {
+                    int id = items.getInt("id");
+                    String name = items.getString("name");
+                    String description = items.getString("description");
 
-                int id = items.getInt("id");
-                String name = items.getString("name");
-                String description = items.getString("description");
-
-                text.append("ID: " + id + " || ");
-                text.append("Name: " + name + "\n");
-                text.append("Description: "+ description + "\n");
-                text.append("------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
-            }
-            if(haveItem == false){
-                client.dataOutputStream.writeUTF("You don't have any item in Auction");
-            } else{
+                    text.append("ID: " + id + " || ");
+                    text.append("Name: " + name + "\n");
+                    text.append("Description: "+ description + "\n");
+                    text.append("------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+                }
                 client.dataOutputStream.writeUTF(text.toString());
+            } else{
+                client.dataOutputStream.writeUTF("You don't have any item in Auction");
             }
             items.close();
             statement.close();
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        String listItems;
+    }
 
+    public void listShop() throws IOException{
+        try {
+            statement= connection.createStatement();
+            ResultSet items = statement.executeQuery("SELECT Items.name, Items.description, Items.owner, Shop.price, Shop.bargain FROM Shop INNER JOIN Items ON Shop.itemId = Items.id;");
+            StringBuilder text = new StringBuilder();
+            text.append("SHOP: \n\n\n");
+            if (items.isBeforeFirst()){
+                while(items.next()) {
+                    String name = items.getString("name");
+                    String owner = items.getString("owner");
+                    String description = items.getString("description");
+                    float price = items.getFloat("price");
+                    int bargain = items.getInt("bargain");
+                    String bargainable = "False";
+                    if(bargain == 1){
+                        bargainable = "True";
+                    }
+                    text.append("Name: " + name + " || Owner: " +owner +"\n");
+                    text.append("Description: "+ description + "\n");
+                    text.append("Price: "+ price + "\n");
+                    text.append("Open to bargain: "+ bargainable + "\n");
+                    text.append("------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+                }
+                client.dataOutputStream.writeUTF(text.toString());
+            } else{
+                client.dataOutputStream.writeUTF("There are no items in the shop right now.\n");
+            }
+            items.close();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }
