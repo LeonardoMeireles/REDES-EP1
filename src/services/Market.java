@@ -15,12 +15,12 @@ public class Market {
     Statement statement;
     Connection connection;
 
-    public Market(ClientHandler client){
+    public Market(ClientHandler client) {
         this.client = client;
         this.connection = client.dbConnection;
     }
 
-    public void addItem() throws IOException{
+    public void addItem() throws IOException {
         Date date = new Date();
         String name = "";
         String price = "";
@@ -53,7 +53,34 @@ public class Market {
     public void listShop() throws IOException{
         try {
             statement= connection.createStatement();
-            String listItems = String.format("SELECT * FROM Items;");
+            String listItems = String.format("SELECT * FROM Items WHERE owner == '%s';",client.username);
+            ResultSet items = statement.executeQuery(listItems);
+            boolean haveItem = false;
+
+            StringBuilder text = new StringBuilder();
+            text.append("YOUR SHOP: \n\n\n");
+            while(items.next()) {
+                haveItem = true;
+
+                String name = items.getString("name");
+                float price = items.getFloat("price");
+                String description = items.getString("description");
+                String owner = items.getString("owner");
+
+                text.append("Name: " + name + " || ");
+                text.append("Price: " + price + "\n");
+                text.append("Description:\n"+ description + "\n");
+                text.append("Owner: " + owner + "\n");
+                text.append("----------------------------------------------------------------------------------------\n");
+            }
+            if(haveItem == false){
+                client.dataOutputStream.writeUTF("You don't have any item in Auction");
+            } else{
+                client.dataOutputStream.writeUTF(text.toString());
+            }
+            items.close();
+            statement.close();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
