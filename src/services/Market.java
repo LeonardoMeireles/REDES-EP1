@@ -38,9 +38,6 @@ public class Market {
                     return;
                 }
             }
-            client.dataOutputStream.writeUTF("Price (Type 'Cancel' to exit):");
-            client.dataOutputStream.flush();
-            price = client.dataInputStream.readUTF();
             client.dataOutputStream.writeUTF("Description, please keep under 140 characters (Type 'Cancel' to exit):");
             client.dataOutputStream.flush();
             description = client.dataInputStream.readUTF();
@@ -53,13 +50,61 @@ public class Market {
                 }
             }
             statement = connection.createStatement();
-            String newItemQuery = String.format("INSERT INTO Items (name, price, description, owner) VALUES('%s','%.2f', '%s', '%s')", name, Float.parseFloat(price), description, client.username);
+            String newItemQuery = String.format("INSERT INTO Items (name, description, owner) VALUES('%s', '%s', '%s')", name, description, client.username);
             client.dataOutputStream.writeUTF("Item successfully added, I'll be sure to keep it safe and sound!\n");
             statement.executeUpdate(newItemQuery);
             return;
         } catch (IOException | SQLException error) {
             error.printStackTrace();
         }
+    }
+
+    public void sellItem() throws IOException{
+        try{
+            client.dataOutputStream.writeUTF("\nSo you are looking to sell, what's the item's id that you are looking to put on sale?\n(To list your items type 'list my items' or 'add item' to add an item to your stash)");
+            client.dataOutputStream.flush();
+            String itemId = client.dataInputStream.readUTF();
+            if(itemId.toLowerCase().equals("list my items")){
+                listItems();
+                sellItem();
+                return;
+            } else if(itemId.toLowerCase().equals("add item")){
+                addItem();
+                sellItem();
+                return;
+            } else{
+                statement = connection.createStatement();
+                ResultSet itemFound = getFromStash(itemId);
+                if(itemFound.next() == true){
+                    client.dataOutputStream.writeUTF("For how much are you trying to sell this for?");
+                    String price = client.dataInputStream.readUTF();
+                    client.dataOutputStream.writeUTF("Are you willing to bargain for it?\nY: yes\tN: no");
+                    String bargainString = client.dataInputStream.readUTF();
+                    int bargain = 0;
+                    if(bargainString.toLowerCase().equals("y") || bargainString.toLowerCase().equals("yes")) {
+                        bargain = 1;
+                    }
+                    String newItemQuery = String.format("INSERT INTO Shop (itemId, price, bargain) VALUES('%o', '%.2f', '%o')", Integer.parseInt(itemId), Float.parseFloat(price), bargain);
+                    statement.executeUpdate(newItemQuery);
+                    client.dataOutputStream.writeUTF("Your item is now up for sale in the shop!\n");
+                    statement.close();
+                } else{
+                    client.dataOutputStream.writeUTF("Sorry there buddy but I couldn't find that item in your stash.\n");
+                }
+                statement.close();
+            }
+        } catch(IOException | SQLException error) {
+            error.printStackTrace();
+            client.dataOutputStream.writeUTF("Something went wrong my dear friend, please try again.\n");
+            return;
+        }
+    }
+
+    public ResultSet getFromStash(String itemId) throws SQLException, IOException {
+        statement = connection.createStatement();
+        String findItemQuery = String.format("SELECT * FROM Items WHERE id == '%o';", Integer.parseInt(itemId));
+        ResultSet itemFound = statement.executeQuery(findItemQuery);
+        return itemFound;
     }
 
     public void getItem() throws IOException {
@@ -73,9 +118,7 @@ public class Market {
                 getItem();
                 return;
             } else{
-                statement = connection.createStatement();
-                String findItemQuery = String.format("SELECT * FROM Items WHERE id == '%o';", Integer.parseInt(itemId));
-                ResultSet itemFound = statement.executeQuery(findItemQuery);
+                ResultSet itemFound = getFromStash(itemId);
                 if(itemFound.next()){
                     if(itemFound.getString("owner").equals(client.username)){
                         String deleteItemQuery = String.format("DELETE FROM Items WHERE id == '%o';", Integer.parseInt(itemId));
@@ -107,16 +150,14 @@ public class Market {
             while(items.next()) {
                 haveItem = true;
 
+                int id = items.getInt("id");
                 String name = items.getString("name");
-                float price = items.getFloat("price");
                 String description = items.getString("description");
-                String owner = items.getString("owner");
 
-                text.append("Name: " + name + " || ");
-                text.append("Price: " + price + "\n");
-                text.append("Description:\n"+ description + "\n");
-                text.append("Owner: " + owner + "\n");
-                text.append("----------------------------------------------------------------------------------------\n");
+                text.append("ID: " + id + " || ");
+                text.append("Name: " + name + "\n");
+                text.append("Description: "+ description + "\n");
+                text.append("------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
             }
             if(haveItem == false){
                 client.dataOutputStream.writeUTF("You don't have any item in Auction");

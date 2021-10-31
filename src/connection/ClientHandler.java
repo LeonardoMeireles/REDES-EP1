@@ -58,7 +58,7 @@ public class ClientHandler extends Thread {
         Server.loggedInClients.add(this);
         Server.loggedInClientsNum++;
         this.username = username;
-        dataOutputStream.writeUTF("\n\nWelcome " +username +" it's a pleasure to have you!\nRemember all commands can be stopped at any given time by tipping 'cancel'.\n");
+        dataOutputStream.writeUTF("\n\nWelcome " +username +" it's a pleasure to have you!\n");
         dataOutputStream.flush();
     }
 
@@ -102,16 +102,20 @@ public class ClientHandler extends Thread {
                         dataOutputStream.writeUTF(listCommands.toString());
                         break;
 
-                    case "list my items" :
-                        market.listItems();
-                        break;
-
                     case "add item" :
                         market.addItem();
                         break;
 
+                    case "sell item":
+                        market.sellItem();
+                        break;
+
                     case "get item" :
                         market.getItem();
+                        break;
+
+                    case "list my items" :
+                        market.listItems();
                         break;
 
                     case "list proposals" :

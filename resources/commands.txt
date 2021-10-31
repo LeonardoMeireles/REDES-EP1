@@ -1,3 +1,5 @@
+
+=================================================================================================
   _____                                          _
  / ____|                                        | |
 | |     ___  _ __ ___  _ __ ___   __ _ _ __   __| |___
@@ -5,13 +7,13 @@
 | |___| (_) | | | | | | | | | | | (_| | | | | (_| \__ \
  \_____\___/|_| |_| |_|_| |_| |_|\__,_|_| |_|\__,_|___/
 
-- "list my shop": list items in your shop
-
 - "add item": auction an item you have
 
 - "sell item": sell an item you received a proposal
 
 - "get item": remove an item in auction
+
+- "list my items": list items in your stash
 
 - "list proposals": list proposals you received for items in auction, so you can accept/recuse/renegotiate them
 
