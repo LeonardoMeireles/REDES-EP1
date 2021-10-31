@@ -102,8 +102,8 @@ public class ClientHandler extends Thread {
                         dataOutputStream.writeUTF(listCommands.toString());
                         break;
 
-                    case "list my shop" :
-                        market.listShop();
+                    case "list my items" :
+                        market.listItems();
                         break;
 
                     case "add item" :

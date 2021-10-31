@@ -69,7 +69,9 @@ public class Market {
             if(itemId.toLowerCase().equals("Cancel")){
                 return;
             } else if(itemId.toLowerCase().equals("list items")){
-                // Still need to make this function
+                listItems();
+                getItem();
+                return;
             } else{
                 statement = connection.createStatement();
                 String findItemQuery = String.format("SELECT * FROM Items WHERE id == '%o';", Integer.parseInt(itemId));
@@ -93,7 +95,7 @@ public class Market {
         }
     }
 
-    public void listShop() throws IOException{
+    public void listItems() throws IOException{
         try {
             statement= connection.createStatement();
             String listItems = String.format("SELECT * FROM Items WHERE owner == '%s';",client.username);
