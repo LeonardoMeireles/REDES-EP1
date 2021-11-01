@@ -11,9 +11,13 @@
 
 - "sell item": sell an item you received a proposal
 
-- "get item": remove an item in auction
+- "get item": remove an item from stash
 
 - "list my items": list items in your stash
+
+- "list shop": lists the shop
+
+- "wallet": shows how much gold you have
 
 - "list proposals": list proposals you received for items in auction, so you can accept/recuse/renegotiate them
 

@@ -18,7 +18,7 @@ public class Market {
 
     public Market(ClientHandler client) {
         this.client = client;
-        this.connection = client.dbConnection;
+        this.connection = client.connection;
     }
 
     public void addItem() throws IOException {
@@ -171,11 +171,12 @@ public class Market {
     public void listShop() throws IOException{
         try {
             statement= connection.createStatement();
-            ResultSet items = statement.executeQuery("SELECT Items.name, Items.description, Items.owner, Shop.price, Shop.bargain FROM Shop INNER JOIN Items ON Shop.itemId = Items.id;");
+            ResultSet items = statement.executeQuery("SELECT Shop.id, Items.name, Items.description, Items.owner, Shop.price, Shop.bargain FROM Shop INNER JOIN Items ON Shop.itemId = Items.id;");
             StringBuilder text = new StringBuilder();
             text.append("SHOP: \n\n\n");
             if (items.isBeforeFirst()){
                 while(items.next()) {
+                    int shopId = items.getInt("bargain");
                     String name = items.getString("name");
                     String owner = items.getString("owner");
                     String description = items.getString("description");
@@ -185,6 +186,7 @@ public class Market {
                     if(bargain == 1){
                         bargainable = "True";
                     }
+                    text.append("Id: " + shopId +"\n");
                     text.append("Name: " + name + " || Owner: " +owner +"\n");
                     text.append("Description: "+ description + "\n");
                     text.append("Price: "+ price + "\n");
@@ -199,6 +201,37 @@ public class Market {
             statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void buyItem() throws IOException{
+        try{
+            client.dataOutputStream.writeUTF("What is the id of the item you wish to buy adventurer? (type 'List Shop' to see all the items up for sale)");
+            String itemId = client.dataInputStream.readUTF();
+            if(itemId.toLowerCase().equals("Cancel")){
+                return;
+            } else if(itemId.toLowerCase().equals("list shop")){
+                listShop();
+                buyItem();
+                return;
+            } else{
+                ResultSet itemFound = getFromStash(itemId);
+                if(itemFound.next()){
+                    if(itemFound.getString("owner").equals(client.username)){
+                        String deleteItemQuery = String.format("DELETE FROM Items WHERE id == '%o';", Integer.parseInt(itemId));
+                        statement.executeUpdate(deleteItemQuery);
+                        statement.close();
+                        client.dataOutputStream.writeUTF("Here is your item friend.\n");
+                    } else{
+                        client.dataOutputStream.writeUTF("Sorry there buddy but I couldn't find that item in your stash.\n");
+                    }
+                    return;
+                } else{
+                    client.dataOutputStream.writeUTF("Sorry there buddy but I couldn't find that item in your stash.\n");
+                }
+            }
+        } catch (IOException | SQLException error) {
+            error.printStackTrace();
         }
     }
 

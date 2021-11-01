@@ -7,7 +7,9 @@ import services.Market;
 import java.io.*;
 import java.net.Socket;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,14 +22,15 @@ public class ClientHandler extends Thread {
     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
     DateFormat timeFormat = new SimpleDateFormat("hh:mm:ss");
     final Socket socket;
-    public static Connection dbConnection;
+    public static Connection connection;
+    Statement statement;
     public String username;
 
     public ClientHandler(Socket socket, DataInputStream dataInputStream, DataOutputStream dataOutputStream, SQLiteJDBC database) {
         this.socket = socket;
         this.dataInputStream = dataInputStream;
         this.dataOutputStream = dataOutputStream;
-        this.dbConnection = database.connect();
+        this.connection = database.connect();
     }
 
     public void endConnection() throws IOException {
@@ -48,7 +51,7 @@ public class ClientHandler extends Thread {
         dataOutputStream.flush();
         String username = dataInputStream.readUTF();
         // Start the login/register
-        LoginAndRegister loginService = new LoginAndRegister(this, dbConnection);
+        LoginAndRegister loginService = new LoginAndRegister(this, connection);
         username = loginService.login(username);
         // If user exits login service
         if(username == null){
@@ -60,6 +63,16 @@ public class ClientHandler extends Thread {
         Server.loggedInClients.put(this, username);
         Server.loggedInClientsNum++;
         dataOutputStream.writeUTF("\n\nWelcome " +username +" it's a pleasure to have you!\n");
+        dataOutputStream.flush();
+    }
+
+    void showWallet() throws SQLException, IOException{
+        statement = connection.createStatement();
+        String getWallet = String.format("SELECT wallet FROM Users WHERE username == '%s';", this.username);
+        ResultSet wallet = statement.executeQuery(getWallet);
+        wallet.next();
+        float money = wallet.getFloat("wallet");
+        dataOutputStream.writeUTF("\n"+username +" you currently have" +money +" gold in your pockets.\n");
         dataOutputStream.flush();
     }
 
@@ -103,6 +116,10 @@ public class ClientHandler extends Thread {
                         dataOutputStream.writeUTF(listCommands.toString());
                         break;
 
+                    case "wallet":
+                        showWallet();
+                        break;
+
                     case "add item" :
                         market.addItem();
                         break;
@@ -123,6 +140,10 @@ public class ClientHandler extends Thread {
                         market.listShop();
                         break;
 
+                    case "buy":
+                        market.buyItem();
+                        break;
+
                     case "list proposals" :
                         break;
 
@@ -134,14 +155,14 @@ public class ClientHandler extends Thread {
                         dataOutputStream.flush();
                         break;
                 }
-            } catch (IOException error) {
+            } catch (IOException | SQLException error) {
                 break;
             }
         }
 
         try{
             // closing resources
-            dbConnection.close();
+            connection.close();
             this.dataInputStream.close();
             this.dataOutputStream.close();
             endConnection();
