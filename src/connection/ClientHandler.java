@@ -128,9 +128,18 @@ public class ClientHandler extends Thread {
                         market.sellItem();
                         break;
 
+                    case "bargain":
+                        market.bargainItem();
+                        break;
+
+                    case "counteroffer":
+                        market.counterOffer();
+                        break;
+
                     case "get item" :
                         market.getItem();
                         break;
+
 
                     case "list my items" :
                         market.listItems();
@@ -140,14 +149,9 @@ public class ClientHandler extends Thread {
                         market.listShop();
                         break;
 
-                    case "buy":
-                        market.buyItem();
-                        break;
 
-                    case "list proposals" :
-                        break;
-
-                    case "item X detail" :
+                    case "list offers" :
+                        market.listOffers();
                         break;
 
                     default:
