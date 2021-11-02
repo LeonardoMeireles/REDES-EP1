@@ -147,8 +147,6 @@ public class ClientHandler extends Thread {
                     case "list proposals" :
                         break;
 
-                    case "item X detail" :
-                        break;
 
                     default:
                         dataOutputStream.writeUTF("Invalid input");

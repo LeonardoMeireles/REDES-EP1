@@ -253,7 +253,7 @@ public class Market {
                         String getOwnerUsername = String.format("SELECT Users.username FROM Users INNER JOIN Items ON Items.owner = Users.username INNER JOIN Shop ON Shop.itemId = Items.id WHERE Items.id == '%o';", Integer.parseInt(shopItemId));
                         ResultSet foundOwner = statement.executeQuery(getOwnerUsername);
                         String ownerUsername = null;
-                        
+
                         ownerUsername = foundOwner.getString("username");
 
                         String updateOwnerWallet = String.format("UPDATE Users SET wallet = '%f' WHERE username == '%s';", walletOwnerNew, ownerUsername);
