@@ -107,7 +107,7 @@ public class ClientHandler extends Thread {
                     endConnection();
                     break;
                 }
-                
+
                 // write on output stream based on the
                 // answer from the client
                 switch (received.toLowerCase()){
@@ -128,12 +128,20 @@ public class ClientHandler extends Thread {
                         market.sellItem();
                         break;
 
+                    case "buy":
+                        market.buyItem();
+                        break;
+
                     case "bargain":
-                        market.bargainItem();
+                        market.bargain.bargainItem();
+                        break;
+
+                    case "accept offer":
+                        market.bargain.acceptOffer();
                         break;
 
                     case "counteroffer":
-                        market.counterOffer();
+                        market.bargain.counterOffer();
                         break;
 
                     case "get item" :
@@ -148,15 +156,14 @@ public class ClientHandler extends Thread {
                         market.listShop();
                         break;
 
-                    case "buy":
-                        market.buyItem();
-                        break;
-
-                    case "list proposals" :
-                        break;
 
                     case "list offers" :
-                        market.listOffers();
+                        market.bargain.listOffers();
+                        break;
+
+
+                    case "exit":
+                        endConnection();
                         break;
 
                     default:

@@ -13,14 +13,18 @@
 
 - "sell item": sell an item you received a proposal
 
+- "buy": buy an item from the shop
+
+- "bargain": bargain for an item from the shop
+
+- "accept offer": accept an offer for a given item you put for sale
+
+- "counteroffer": give a counteroffer for an offer you received for your item
+
 - "get item": remove an item from stash
 
 - "list my items": list items in your stash
 
 - "list shop": lists the shop
-
-- "buy": buy an item from the shop
-
-- "list proposals": list proposals you received for items in auction, so you can accept/recuse/renegotiate them
 
 - "exit": you disconnect from the shop
