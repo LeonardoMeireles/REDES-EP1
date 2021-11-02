@@ -9,9 +9,9 @@
 
 - "wallet": shows how much gold you have
 
-- "add item": register an item you have
+- "add item": auction an item you have
 
-- "sell item": sell an item you received
+- "sell item": sell an item you received a proposal
 
 - "get item": remove an item from stash
 

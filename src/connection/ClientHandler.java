@@ -22,7 +22,7 @@ public class ClientHandler extends Thread {
     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
     DateFormat timeFormat = new SimpleDateFormat("hh:mm:ss");
     final Socket socket;
-    public static Connection connection;
+    public Connection connection;
     Statement statement;
     public String username;
 
@@ -128,6 +128,14 @@ public class ClientHandler extends Thread {
                         market.sellItem();
                         break;
 
+                    case "bargain":
+                        market.bargainItem();
+                        break;
+
+                    case "counteroffer":
+                        market.counterOffer();
+                        break;
+
                     case "get item" :
                         market.getItem();
                         break;
@@ -147,6 +155,9 @@ public class ClientHandler extends Thread {
                     case "list proposals" :
                         break;
 
+                    case "list offers" :
+                        market.listOffers();
+                        break;
 
                     default:
                         dataOutputStream.writeUTF("Invalid input");
