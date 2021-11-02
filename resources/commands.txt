@@ -7,7 +7,7 @@
 | |___| (_) | | | | | | | | | | | (_| | | | | (_| \__ \
  \_____\___/|_| |_| |_|_| |_| |_|\__,_|_| |_|\__,_|___/
 
-- "add item": auction an item you have
+- "add item": register an item you have
 
 - "sell item": sell an item you received a proposal
 
@@ -20,7 +20,5 @@
 - "wallet": shows how much gold you have
 
 - "list proposals": list proposals you received for items in auction, so you can accept/recuse/renegotiate them
-
-- "item <name> detail: show detail about an item in auction
 
 - "exit": you disconnect from the shop

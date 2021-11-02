@@ -21,7 +21,7 @@ public class Market {
         this.connection = client.connection;
     }
 
-    public void addItem() throws IOException {
+    public void addItem() throws IOException { //add item to the market
         Date date = new Date();
         String name = "";
         String price = "";
@@ -53,13 +53,14 @@ public class Market {
             String newItemQuery = String.format("INSERT INTO Items (name, description, owner) VALUES('%s', '%s', '%s')", name, description, client.username);
             client.dataOutputStream.writeUTF("Item successfully added, I'll be sure to keep it safe and sound!\n");
             statement.executeUpdate(newItemQuery);
+            statement.close();
             return;
         } catch (IOException | SQLException error) {
             error.printStackTrace();
         }
     }
 
-    public void sellItem() throws IOException{
+    public void sellItem() throws IOException{ // add item to sell
         try{
             client.dataOutputStream.writeUTF("\nSo you are looking to sell, what's the item's id that you are looking to put on sale?\n(To list your items type 'list my items' or 'add item' to add an item to your stash)");
             client.dataOutputStream.flush();
@@ -100,14 +101,29 @@ public class Market {
         }
     }
 
-    public ResultSet getFromStash(String itemId) throws SQLException, IOException {
+    public ResultSet getFromStash(String itemId) throws SQLException, IOException { // search for items at item list by item ID
         statement = connection.createStatement();
         String findItemQuery = String.format("SELECT * FROM Items WHERE id == '%o';", Integer.parseInt(itemId));
         ResultSet itemFound = statement.executeQuery(findItemQuery);
         return itemFound;
     }
 
-    public void getItem() throws IOException {
+    public ResultSet getFromShop(String itemId) throws SQLException, IOException { // search for items at shop list by shop ID
+        statement = connection.createStatement();
+        String findItemQuery = String.format("SELECT * FROM Shop WHERE id == '%o';", Integer.parseInt(itemId));
+        ResultSet itemFound = statement.executeQuery(findItemQuery);
+        return itemFound;
+    }
+
+    public float getWallet(String user) throws SQLException, IOException { // search for items at shop list by shop ID
+        statement = connection.createStatement();
+        String findUser = String.format("SELECT wallet FROM Users WHERE username == '%s';", user);
+        ResultSet theUser = statement.executeQuery(findUser);
+        float walletValue = theUser.getFloat("wallet");
+        return walletValue;
+    }
+
+    public void getItem() throws IOException { // get back the item at the market
         try{
             client.dataOutputStream.writeUTF("What is the id of the item you wish to have back traveler? (type 'List Items' to see all your available items)");
             String itemId = client.dataInputStream.readUTF();
@@ -137,8 +153,13 @@ public class Market {
             error.printStackTrace();
         }
     }
-
-    public void listItems() throws IOException{
+/*
+    public int getWallet(String username) throws SQLException, IOException {
+        statement = connection.createStatement();
+        String findWallet = String.format("");
+    }
+*/
+    public void listItems() throws IOException{ // list items at your shop
         try {
             statement= connection.createStatement();
             String listItems = String.format("SELECT * FROM Items WHERE owner == '%s';",client.username);
@@ -168,7 +189,7 @@ public class Market {
         }
     }
 
-    public void listShop() throws IOException{
+    public void listShop() throws IOException{ // list items in the shop
         try {
             statement= connection.createStatement();
             ResultSet items = statement.executeQuery("SELECT Shop.id, Items.name, Items.description, Items.owner, Shop.price, Shop.bargain FROM Shop INNER JOIN Items ON Shop.itemId = Items.id;");
@@ -176,7 +197,7 @@ public class Market {
             text.append("SHOP: \n\n\n");
             if (items.isBeforeFirst()){
                 while(items.next()) {
-                    int shopId = items.getInt("bargain");
+                    int shopId = items.getInt("id");
                     String name = items.getString("name");
                     String owner = items.getString("owner");
                     String description = items.getString("description");
@@ -204,30 +225,57 @@ public class Market {
         }
     }
 
-    public void buyItem() throws IOException{
+    public void buyItem() throws IOException{ // buy item at the shop
         try{
+            statement = connection.createStatement();
             client.dataOutputStream.writeUTF("What is the id of the item you wish to buy adventurer? (type 'List Shop' to see all the items up for sale)");
-            String itemId = client.dataInputStream.readUTF();
-            if(itemId.toLowerCase().equals("Cancel")){
+            String shopItemId = client.dataInputStream.readUTF();// shop id that client wants to buy at the shop
+
+            if(shopItemId.toLowerCase().equals("cancel")){
                 return;
-            } else if(itemId.toLowerCase().equals("list shop")){
+            } else if(shopItemId.toLowerCase().equals("list shop")){
                 listShop();
                 buyItem();
-                return;
-            } else{
-                ResultSet itemFound = getFromStash(itemId);
-                if(itemFound.next()){
-                    if(itemFound.getString("owner").equals(client.username)){
-                        String deleteItemQuery = String.format("DELETE FROM Items WHERE id == '%o';", Integer.parseInt(itemId));
-                        statement.executeUpdate(deleteItemQuery);
-                        statement.close();
-                        client.dataOutputStream.writeUTF("Here is your item friend.\n");
+            } else{ // passed item shopId
+                ResultSet itemFoundShop = getFromShop(shopItemId);// item at shop
+
+                if(itemFoundShop.next()){
+                    ResultSet itemItemList = getFromStash(itemFoundShop.getString("itemId")); // item at item list that client wants to buy at the shop
+
+                    if(itemItemList.getString("owner").equals(client.username)){ // tried to buy client own item
+                        client.dataOutputStream.writeUTF("You are the owner of this item");
+                        return;
                     } else{
-                        client.dataOutputStream.writeUTF("Sorry there buddy but I couldn't find that item in your stash.\n");
+                        // pay for item / update wallets
+                        float walletOwnerNew = getWallet(itemItemList.getString("owner")) + itemFoundShop.getFloat("price");
+                        float walletBuyerNew = getWallet(client.username) - itemFoundShop.getFloat("price");
+
+                        String getOwnerUsername = String.format("SELECT Users.username FROM Users INNER JOIN Items ON Items.owner = Users.username INNER JOIN Shop ON Shop.itemId = Items.id WHERE Items.id == '%o';", Integer.parseInt(shopItemId));
+                        ResultSet foundOwner = statement.executeQuery(getOwnerUsername);
+                        String ownerUsername = null;
+                        
+                        ownerUsername = foundOwner.getString("username");
+
+                        String updateOwnerWallet = String.format("UPDATE Users SET wallet = '%f' WHERE username == '%s';", walletOwnerNew, ownerUsername);
+                        String updateBuyerWallet = String.format("UPDATE Users SET wallet = '%f' WHERE username == '%s';", walletBuyerNew, client.username);
+                        statement.executeUpdate(updateOwnerWallet);
+                        statement.executeUpdate(updateBuyerWallet);
+
+                        // delete the item from the shop
+                        String deleteQueryShop = String.format("DELETE FROM Shop WHERE id = %o;", Integer.parseInt(shopItemId));
+                        statement.executeUpdate(deleteQueryShop);
+
+                        // update the item owner
+                        String addToInventory = String.format("UPDATE Items SET owner = '%s' WHERE id = %d;", client.username, itemFoundShop.getInt("itemId"));
+                        statement.executeUpdate(addToInventory);
+
+                        client.dataOutputStream.writeUTF("You bought the item");
                     }
-                    return;
-                } else{
-                    client.dataOutputStream.writeUTF("Sorry there buddy but I couldn't find that item in your stash.\n");
+                    itemFoundShop.close();
+                    itemItemList.close();
+                    statement.close();
+                } else{ //didn't find item with the ID passed
+                    client.dataOutputStream.writeUTF("Sorry there buddy but I couldn't find that item in stash.\n");
                 }
             }
         } catch (IOException | SQLException error) {
