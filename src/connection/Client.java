@@ -9,7 +9,7 @@ public class Client {
     static Socket socket;
 
     public static void connect() throws IOException{
-        InetAddress ip = InetAddress.getByName("localhost");// get localhost ip
+        InetAddress ip = InetAddress.getByName("localhost");
         socket = new Socket(ip, ServerPort);
     }
 
@@ -48,7 +48,7 @@ public class Client {
                         String input = dataInputStream.readUTF();
                         System.out.println(input);
                     } catch (IOException error) {
-                        error.printStackTrace();
+                        System.out.println("Disconnected from server.");
                         System.exit(500);
                         break;
                     }
@@ -75,6 +75,5 @@ public class Client {
         //create threads
         createSendMessage(scan, dataOutputStream);
         createReadMessage(dataInputStream);
-
     }
 }

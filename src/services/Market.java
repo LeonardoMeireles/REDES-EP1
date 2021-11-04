@@ -167,7 +167,7 @@ public class Market {
             ResultSet items = statement.executeQuery(listItems);
 
             StringBuilder text = new StringBuilder();
-            text.append("YOUR SHOP: \n\n\n");
+            text.append("YOUR ITEMS: \n\n\n");
             if (items.isBeforeFirst() ) {
                 while(items.next()) {
                     int id = items.getInt("id");

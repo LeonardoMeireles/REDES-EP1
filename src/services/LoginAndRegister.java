@@ -29,35 +29,32 @@ public class LoginAndRegister{
         ResultSet userFound = statement.executeQuery(findUserQuery);
         // If user was found, login user
         if(userFound.next()){
-            while(true){
-                clientHandler.dataOutputStream.writeUTF("Insert your password:");
-                clientHandler.dataOutputStream.flush();
-                String password = clientHandler.dataInputStream.readUTF();
-                if(userFound.getString("password").equals(password)){
+            clientHandler.dataOutputStream.writeUTF("Insert your password:");
+            clientHandler.dataOutputStream.flush();
+            String password = clientHandler.dataInputStream.readUTF();
+            if(userFound.getString("password").equals(password)){
+                statement.close();
+                return username;
+            } else {
+                clientHandler.dataOutputStream.writeUTF("That was the wrong password, would you like to try again?\nY: yes\tN: no");
+                String answer = clientHandler.dataInputStream.readUTF();
+                if(answer.toLowerCase().equals("y")){
                     statement.close();
-                    return username;
-                } else {
-                    clientHandler.dataOutputStream.writeUTF("That was the wrong password, would you like to try again?\nY: yes\tN: no");
-                    String answer = clientHandler.dataInputStream.readUTF();
-                    if(answer.toLowerCase().equals("y")){
-                        continue;
-                    } else{
-                        statement.close();
-                        return null;
-                    }
+                    return login(username);
+                } else{
+                    statement.close();
+                    return null;
                 }
             }
         } else { // No user found
             clientHandler.dataOutputStream.writeUTF("\nHuum, i don't know any adventurer with that name, would you like to sign up for my services?\nY: yes\tN: no");
             clientHandler.dataOutputStream.flush();
-            while(true){
-                statement.close();
-                String answer = clientHandler.dataInputStream.readUTF();
-                if(answer.toLowerCase().equals("y")){
-                    return createAccount();
-                } else {
-                    return null;
-                }
+            statement.close();
+            String answer = clientHandler.dataInputStream.readUTF();
+            if(answer.toLowerCase().equals("y")){
+                return createAccount();
+            } else {
+                return null;
             }
         }
     }
@@ -74,6 +71,7 @@ public class LoginAndRegister{
         //receive new username/password
         if(userFound.next() == true){
             clientHandler.dataOutputStream.writeUTF("User already exists, please try another username.");
+            statement.close();
             return createAccount();
         } else {
             clientHandler.dataOutputStream.writeUTF("\nInsert your password (under 50 characters):");

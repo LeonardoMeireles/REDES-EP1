@@ -37,7 +37,7 @@ public class Bargain {
                 ResultSet itemFound = statement.executeQuery(findItemQuery);
                 if(itemFound.next()){
                     if(itemFound.getString("owner").equals(client.username)){
-                        client.dataOutputStream.writeUTF("Sorry but you can only counter-offer to your own items.\n");
+                        client.dataOutputStream.writeUTF("Sorry but you can only make counteroffers to your own items.\n");
                         return;
                     } else if(itemFound.getInt("bargain") == 0){
                         client.dataOutputStream.writeUTF("Sorry but you can't make offers for that item.\n");
@@ -77,9 +77,9 @@ public class Bargain {
     public void listOffers() throws IOException{
         try {
             statement= connection.createStatement();
-            ResultSet offers = statement.executeQuery("SELECT Bargain.id, Items.name, Items.description, Shop.price, Bargain.buyerUsername, Bargain.offer, Bargain.message FROM Bargain INNER JOIN Shop ON Shop.id = Bargain.shopId INNER JOIN Items ON Items.id = Shop.itemId WHERE Items.owner == '" +client.username + "';");
-            StringBuilder text = new StringBuilder();
-            text.append("Offers: \n\n\n");
+            ResultSet offers = statement.executeQuery("SELECT Bargain.id, Items.name, Shop.price, Bargain.buyerUsername, Bargain.offer, Bargain.message FROM Bargain INNER JOIN Shop ON Shop.id = Bargain.shopId INNER JOIN Items ON Items.id = Shop.itemId WHERE Items.owner == '" +client.username + "';");
+            StringBuilder textOffers = new StringBuilder();
+            textOffers.append("Offers: \n\n\n");
             if (offers.isBeforeFirst()){
                 while(offers.next()) {
                     int bargainId = offers.getInt("id");
@@ -89,19 +89,44 @@ public class Bargain {
                     Float offer = offers.getFloat("offer");
                     String message = offers.getString("message");
 
-                    text.append("Id: " + bargainId +"\n");
-                    text.append("Item name: " + itemName + " || Price listed: " +itemPrice +"\n\n");
-                    text.append("Buyer: "+ buyerUsername + " || Offer: " +offer +" gold\n");
-                    text.append("Message: "+ message + "\n");
-                    text.append("------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+                    textOffers.append("Id: " + bargainId +"\n");
+                    textOffers.append("Item name: " + itemName + " || Price listed: " +itemPrice +"\n\n");
+                    textOffers.append("Buyer: "+ buyerUsername + " || Offer: " +offer +" gold\n");
+                    textOffers.append("Message: "+ message + "\n");
+                    textOffers.append("------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
                 }
-                client.dataOutputStream.writeUTF(text.toString());
+                client.dataOutputStream.writeUTF(textOffers.toString());
             } else{
                 client.dataOutputStream.writeUTF("You haven't received any offers.\n");
+            }
+            ResultSet counterOffers = statement.executeQuery("SELECT CounterOffer.id, Bargain.buyerUsername, Items.name, Shop.price, Items.owner, Bargain.offer, CounterOffer.counterOffer,  CounterOffer.message FROM CounterOffer INNER JOIN Bargain ON Bargain.id = CounterOffer.bargainId INNER JOIN Shop ON Shop.id = Bargain.shopId INNER JOIN Items ON Items.id = Shop.itemId WHERE Bargain.buyerUsername == '" +client.username + "';");
+            StringBuilder textCounterOffers = new StringBuilder();
+            textCounterOffers.append("\nCounteroffers: \n\n\n");
+            if (counterOffers.isBeforeFirst()){
+                while(counterOffers.next()) {
+                    int counterOfferId = offers.getInt("id");
+                    String itemName = offers.getString("name");
+                    String itemPrice = offers.getString("price");
+                    String ownerUsername = offers.getString("owner");
+                    Float offer = offers.getFloat("offer");
+                    Float counterOffer = offers.getFloat("counterOffer");
+                    String message = offers.getString("message");
+
+                    textCounterOffers.append("Id: " + counterOfferId +"\n");
+                    textCounterOffers.append("Item name: " + itemName + " || Price listed: " +itemPrice +"\n\n");
+                    textCounterOffers.append("Your offer: " +offer +" gold\n");
+                    textCounterOffers.append("Owner: "+ ownerUsername + " || Counteroffer: " +counterOffer +" gold\n");
+                    textCounterOffers.append("Message: "+ message + "\n");
+                    textCounterOffers.append("------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+                }
+                client.dataOutputStream.writeUTF(textCounterOffers.toString());
+            } else{
+                client.dataOutputStream.writeUTF("You haven't received any counteroffers.\n");
             }
             offers.close();
             statement.close();
         } catch (IOException | SQLException | NumberFormatException error) {
+            System.out.println(error);
             client.dataOutputStream.writeUTF("Sorry there buddy something went wrong try again.\n");
             return;
         }
@@ -109,7 +134,7 @@ public class Bargain {
 
     public void counterOffer() throws IOException {
         try {
-            client.dataOutputStream.writeUTF("What is the offer's id you wish to counteroffer? (type 'list offers' to see all the items up for sale)");
+            client.dataOutputStream.writeUTF("What is the offer's id you wish to counteroffer? (type 'list offers' to see all offers and counteroffers you received)");
             String offerId = client.dataInputStream.readUTF();
             if (offerId.toLowerCase().equals("cancel")) {
                 return;
@@ -154,10 +179,10 @@ public class Bargain {
         }
     }
 
-    public void acceptOffer() throws IOException{ // buy item at the shop
+    public void acceptOffer() throws IOException{
         try{
             statement = connection.createStatement();
-            client.dataOutputStream.writeUTF("What is the id of the offer you wish to accept adventurer? (type 'list offers' to see all the items up for sale)");
+            client.dataOutputStream.writeUTF("What is the id of the offer you wish to accept adventurer? (type 'list offers' to see all offers and counteroffers you received)");
             String bargainId = client.dataInputStream.readUTF();// shop id that client wants to buy at the shop
 
             if(bargainId.toLowerCase().equals("cancel")){
@@ -214,4 +239,72 @@ public class Bargain {
             return;
         }
     }
+
+    public void acceptCounterOffer() throws IOException{
+        try{
+            statement = connection.createStatement();
+            client.dataOutputStream.writeUTF("What is the id of the counteroffer you wish to accept adventurer? (type 'list offers' to see all the items up for sale)");
+            String counterOfferId = client.dataInputStream.readUTF();// shop id that client wants to buy at the shop
+
+            if(counterOfferId.toLowerCase().equals("cancel")){
+                return;
+            } else if(counterOfferId.toLowerCase().equals("list offers")){
+                listOffers();
+                acceptCounterOffer();
+                return;
+            } else{ // passed counterOffer id
+                statement = connection.createStatement();
+                ResultSet counterOfferFound = statement.executeQuery(String.format("SELECT CounterOffer.counterOffer, CounterOffer.bargainId, Bargain.shopId, Bargain.buyerUsername, Items.owner, Shop.itemId FROM CounterOffer INNER JOIN Bargain ON Bargain.id = CounterOffer.bargainId INNER JOIN Shop ON Shop.id = Bargain.shopId INNER JOIN Items ON Items.id = Shop.itemId WHERE CounterOffer.id == '%o'", Integer.parseInt(counterOfferId)));// item at shop
+                if(counterOfferFound.next()){
+                    if(!counterOfferFound.getString("buyerUsername").equals(client.username)){
+                        client.dataOutputStream.writeUTF("You did not make that offer");
+                        return;
+                    } else{
+                        String ownerUsername = counterOfferFound.getString("owner");
+                        Float counterOffer = counterOfferFound.getFloat("counterOffer");
+                        int shopId = counterOfferFound.getInt("shopId");
+                        int itemId = counterOfferFound.getInt("itemId");
+                        int bargainId = counterOfferFound.getInt("bargainId");
+                        // pay for item / update wallets
+                        ResultSet walletOwner = statement.executeQuery(String.format("SELECT wallet FROM Users WHERE username == '%s'", ownerUsername));// item at shop
+                        ResultSet walletBuyer = statement.executeQuery(String.format("SELECT wallet FROM Users WHERE username == '%s'", client.username));// item at shop
+
+                        float walletOwnerNew = walletOwner.getFloat("wallet") + counterOffer;
+                        float walletBuyerNew = walletBuyer.getFloat("wallet") - counterOffer;
+
+                        String updateOwnerWallet = String.format("UPDATE Users SET wallet = '%f' WHERE username == '%s';", walletOwnerNew, ownerUsername);
+                        String updateBuyerWallet = String.format("UPDATE Users SET wallet = '%f' WHERE username == '%s';", walletBuyerNew, client.username);
+                        statement.executeUpdate(updateOwnerWallet);
+                        statement.executeUpdate(updateBuyerWallet);
+
+                        // delete the item from the shop
+                        String deleteQueryShop = String.format("DELETE FROM Shop WHERE id = %o;", shopId);
+                        statement.executeUpdate(deleteQueryShop);
+
+                        // delete from bargain
+                        String deleteBargainQuery = String.format("DELETE FROM Bargain WHERE id = %o;", bargainId);
+                        statement.executeUpdate(deleteBargainQuery);
+
+                        // delete from counteroffer
+                        String deleteCounterOfferQuery = String.format("DELETE FROM CounterOffer WHERE id = %o;", Integer.parseInt(counterOfferId));
+                        statement.executeUpdate(deleteBargainQuery);
+
+                        // update the item owner
+                        String addToInventory = String.format("UPDATE Items SET owner = '%s' WHERE id = %d;", client.username, itemId);
+                        statement.executeUpdate(addToInventory);
+
+                        client.dataOutputStream.writeUTF("You bought the item");
+                    }
+                    statement.close();
+                } else{ //didn't find bargain with the ID passed
+                    client.dataOutputStream.writeUTF("Sorry there buddy but I couldn't find that counteroffer.\n");
+                }
+            }
+        } catch (IOException | SQLException | NumberFormatException error) {
+            error.printStackTrace();
+            return;
+        }
+    }
+
+
 }

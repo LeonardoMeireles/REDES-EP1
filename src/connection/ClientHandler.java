@@ -42,7 +42,7 @@ public class ClientHandler extends Thread {
     }
 
     // Starts the intro for the app
-    public void startAuctionHouse() throws SQLException, IOException{
+    public void startBargainHouse() throws SQLException, IOException{
         // Writes down the intro for the app
         StringBuilder fullLogo = writeASC("resources/dragon.txt");
         fullLogo.append("\nWelcome traveler, what brings you to this place of wonders? Buying? Selling? Suit yourself! There's a place for everyone!\n");
@@ -55,7 +55,7 @@ public class ClientHandler extends Thread {
         username = loginService.login(username);
         // If user exits login service
         if(username == null){
-            startAuctionHouse();
+            startBargainHouse();
             return;
         }
         // Login/Register successful
@@ -72,7 +72,7 @@ public class ClientHandler extends Thread {
         ResultSet wallet = statement.executeQuery(getWallet);
         wallet.next();
         float money = wallet.getFloat("wallet");
-        dataOutputStream.writeUTF("\n"+username +" you currently have" +money +" gold in your pockets.\n");
+        dataOutputStream.writeUTF("\n"+username +" you currently have " +money +" gold in your pockets.\n");
         dataOutputStream.flush();
     }
 
@@ -93,7 +93,7 @@ public class ClientHandler extends Thread {
         String received;
         // client login handler
         try{
-            startAuctionHouse();
+            startBargainHouse();
         } catch(IOException | SQLException error) {
             error.printStackTrace();
         }
@@ -144,6 +144,10 @@ public class ClientHandler extends Thread {
                         market.bargain.counterOffer();
                         break;
 
+                    case "accept counteroffer":
+                        market.bargain.acceptCounterOffer();
+                        break;
+
                     case "get item" :
                         market.getItem();
                         break;
@@ -159,11 +163,6 @@ public class ClientHandler extends Thread {
 
                     case "list offers" :
                         market.bargain.listOffers();
-                        break;
-
-
-                    case "exit":
-                        endConnection();
                         break;
 
                     default:

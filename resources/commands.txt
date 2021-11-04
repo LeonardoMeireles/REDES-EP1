@@ -21,10 +21,14 @@
 
 - "counteroffer": give a counteroffer for an offer you received for your item
 
+- "accept counteroffer": accept a counteroffer you received
+
 - "get item": remove an item from stash
 
 - "list my items": list items in your stash
 
 - "list shop": lists the shop
+
+- "list offers": lists the offers you received for an item in your shop
 
 - "exit": you disconnect from the shop
